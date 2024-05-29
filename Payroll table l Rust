@@ -1,0 +1,51 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use ink_lang as ink;
+
+#[ink::contract]
+mod wages_table {
+    #[ink(storage)]
+    pub struct WagesTable {
+        employee_wages: ink_storage::collections::HashMap<AccountId, u64>,
+    }
+
+    impl WagesTable {
+        #[ink(constructor)]
+        pub fn new() -> Self {
+            Self {
+                employee_wages: Default::default(),
+            }
+        }
+
+        #[ink(message)]
+        pub fn set_wage(&mut self, employee: AccountId, wage: u64) {
+            self.employee_wages.insert(employee, wage);
+        }
+
+        #[ink(message)]
+        pub fn get_wage(&self, employee: AccountId) -> Option<u64> {
+            self.employee_wages.get(&employee).copied()
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[ink::test]
+        fn test_wages_table() {
+            let mut contract = WagesTable::new();
+            let alice = AccountId::from([1; 32]);
+            let bob = AccountId::from([2; 32]);
+
+            // Set wages for employees
+            contract.set_wage(alice, 5000);
+            contract.set_wage(bob, 6000);
+
+            // Check wages
+            assert_eq!(contract.get_wage(alice), Some(5000));
+            assert_eq!(contract.get_wage(bob), Some(6000));
+            assert_eq!(contract.get_wage(AccountId::from([3; 32])), None); // Non-existent employee
+        }
+    }
+}
